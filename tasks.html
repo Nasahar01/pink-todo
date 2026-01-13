@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My To-Do</title>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: Quicksand;
+      background: linear-gradient(to bottom right, #ffd6e8, #ffc3a0);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: white;
+      padding: 25px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 450px;
+    }
+    h1 {
+      font-family: Pacifico;
+      color: #ff69b4;
+      text-align: center;
+    }
+    input {
+      width: 75%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid pink;
+    }
+    button {
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      background: #ff69b4;
+      color: white;
+      cursor: pointer;
+    }
+    li {
+      background: #fff0f5;
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    li.done {
+      text-decoration: line-through;
+      color: gray;
+      background: #e8ffe8;
+    }
+    .task-text {
+      cursor: pointer;
+      flex: 1;
+    }
+    .bottom {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <p id="userEmail"></p>
+  <h1>🌼 My To-Do List</h1>
+
+  <input id="taskInput" placeholder="Add a task" />
+  <button onclick="addTask()">➕</button>
+
+  <ul id="taskList"></ul>
+
+  <div class="bottom">
+    <button onclick="clearAll()">Clear All</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA2fFXPpEf8aPuC9yWzt4wOVkJxYnssbAE",
+  authDomain: "pink-todo-14326.firebaseapp.com",
+  projectId: "pink-todo-14326",
+  storageBucket: "pink-todo-14326.firebasestorage.app",
+  messagingSenderId: "682331693985",
+  appId: "1:682331693985:web:8ccb47b328b051d538e1e0"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let uid;
+let tasks = [];
+
+onAuthStateChanged(auth, async user => {
+  if (!user) location.href = "login.html";
+  uid = user.uid;
+  userEmail.innerText = "👤 " + user.email;
+  loadTasks();
+});
+
+async function loadTasks() {
+  const ref = doc(db, "tasks", uid);
+  const snap = await getDoc(ref);
+  if (snap.exists()) tasks = snap.data().items;
+  render();
+}
+
+async function save() {
+  await setDoc(doc(db, "tasks", uid), { items: tasks });
+}
+
+window.addTask = () => {
+  if (!taskInput.value.trim()) return;
+  tasks.push({ text: taskInput.value, done: false });
+  taskInput.value = "";
+  save();
+  render();
+};
+
+function render() {
+  taskList.innerHTML = "";
+  tasks.forEach((task, i) => {
+    const li = document.createElement("li");
+    if (task.done) li.classList.add("done");
+
+    const span = document.createElement("span");
+    span.className = "task-text";
+    span.textContent = "🧸 " + task.text;
+    span.onclick = () => toggleDone(i);
+
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "🗑";
+    delBtn.style.background = "#ff1493";
+    delBtn.onclick = () => del(i);
+
+    li.appendChild(span);
+    li.appendChild(delBtn);
+    taskList.appendChild(li);
+  });
+}
+
+function toggleDone(i) {
+  tasks[i].done = !tasks[i].done;
+  save();
+  render();
+}
+
+window.del = i => {
+  tasks.splice(i, 1);
+  save();
+  render();
+};
+
+window.clearAll = () => {
+  tasks = [];
+  save();
+  render();
+};
+
+window.logout = () => signOut(auth);
+</script>
+
+</body>
+</html>
