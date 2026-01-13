@@ -68,10 +68,11 @@ window.login = () => {
 
 window.forgot = () => {
   sendPasswordResetEmail(auth, email.value)
-    .then(() => alert("Password reset email sent 🌸"))
+    .then(() => alert("Password reset email sent 🌸(also check in spam)"))
     .catch(err => alert(err.message));
 };
 </script>
 
 </body>
 </html>
+
